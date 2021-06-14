@@ -63,4 +63,5 @@ endif()
 #   add_subdirectory(fuzz_test)
 # endif()
 
+add_subdirectory(external)
 add_subdirectory(src)

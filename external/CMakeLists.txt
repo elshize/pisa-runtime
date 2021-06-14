@@ -1,0 +1,6 @@
+set(PISA_ENABLE_TESTING OFF CACHE BOOL "")
+set(PISA_ENABLE_BENCHMARKING OFF CACHE BOOL "")
+set(PISA_BUILD_TOOLS OFF CACHE BOOL "")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+add_subdirectory(pisa)

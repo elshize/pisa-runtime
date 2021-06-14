@@ -1,21 +1,24 @@
 // #include <iostream>
 // #include <optional>
 // #include <thread>
+#include <memory>
 
-// #include <CLI/CLI.hpp>
+#include "CLI11.hpp"
+#include "query_processor.hpp"
+#include "simdbp_query_processor.hpp"
 // #include <boost/algorithm/string/classification.hpp>
 // #include <boost/algorithm/string/split.hpp>
 // #include <functional>
 // #include <mappable/mapper.hpp>
 // #include <mio/mmap.hpp>
 // #include <range/v3/view/enumerate.hpp>
-// #include <spdlog/sinks/stdout_color_sinks.h>
-// #include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 // #include <tbb/global_control.h>
 // #include <tbb/parallel_for.h>
 
+#include "app.hpp"
 // #include "accumulator/lazy_accumulator.hpp"
-// #include "app.hpp"
 // #include "cursor/block_max_scored_cursor.hpp"
 // #include "cursor/max_scored_cursor.hpp"
 // #include "cursor/scored_cursor.hpp"
@@ -175,63 +178,70 @@
 // using wand_uniform_index_quantized =
 //     wand_data<wand_data_compressed<PayloadType::Quantized>>;
 
-int main(int argc, const char **argv) {
-  // spdlog::set_default_logger(spdlog::stderr_color_mt("default"));
+int main(int argc, const char** argv)
+{
+    spdlog::set_default_logger(spdlog::stderr_color_mt("default"));
 
-  // std::string documents_file;
-  // std::string run_id = "R0";
-  // bool quantized = false;
+    std::string documents_file;
+    std::string run_id = "R0";
+    bool quantized = false;
 
-  // App<arg::Index, arg::WandData<arg::WandMode::Required>,
-  //     arg::Query<arg::QueryMode::Ranked>, arg::Algorithm, arg::Scorer,
-  //     arg::Thresholds, arg::Threads>
-  //     app{"Retrieves query results in TREC format."};
-  // app.add_option("-r,--run", run_id, "Run identifier");
-  // app.add_option("--documents", documents_file, "Document
-  // lexicon")->required(); app.add_flag("--quantized", quantized, "Quantized
-  // scores");
+    App<arg::Index,
+        arg::WandData<arg::WandMode::Required>,
+        arg::Query<arg::QueryMode::Ranked>,
+        arg::Algorithm,
+        arg::Scorer,
+        arg::Thresholds,
+        arg::Threads>
+        app{"Retrieves query results in TREC format."};
+    app.add_option("-r,--run", run_id, "Run identifier");
+    app.add_option("--documents", documents_file, "Document lexicon")->required();
+    app.add_flag("--quantized", quantized, "Quantized scores");
 
-  // CLI11_PARSE(app, argc, argv);
+    CLI11_PARSE(app, argc, argv);
 
-  // tbb::global_control control(tbb::global_control::max_allowed_parallelism,
-  //                             app.threads() + 1);
-  // spdlog::info("Number of worker threads: {}", app.threads());
+    auto query_processor =
+        std::make_unique<SimdBpQueryProcessor>(app.index_filename(), app.wand_data_path());
 
-  // if (run_id.empty()) {
-  //   run_id = "PISA";
-  // }
+    // tbb::global_control control(tbb::global_control::max_allowed_parallelism,
+    //                             app.threads() + 1);
+    // spdlog::info("Number of worker threads: {}", app.threads());
 
-  // auto iteration = "Q0";
+    // if (run_id.empty()) {
+    //   run_id = "PISA";
+    // }
 
-  // auto params = std::make_tuple(
-  //     app.index_filename(), app.wand_data_path(), app.queries(),
-  //     app.thresholds_file(), app.index_encoding(), app.algorithm(), app.k(),
-  //     documents_file, app.scorer_params(), run_id, iteration);
+    // auto iteration = "Q0";
 
-  // /**/
-  // if (false) { // NOLINT
-  // #define LOOP_BODY(R, DATA, T)                                                  \
-  // }                                                                            \
-  // else if (app.index_encoding() == BOOST_PP_STRINGIZE(T)) {                    \
-  //   if (app.is_wand_compressed()) {                                            \
-  //     if (quantized) {                                                         \
-  //       std::apply(evaluate_queries<BOOST_PP_CAT(T, _index),                   \
-  //                                   wand_uniform_index_quantized>,             \
-  //                  params);                                                    \
-  //     } else {                                                                 \
-  //       std::apply(                                                            \
-  //           evaluate_queries<BOOST_PP_CAT(T, _index), wand_uniform_index>,     \
-  //           params);                                                           \
-  //     }                                                                        \
-  //   } else {                                                                   \
-  //     std::apply(evaluate_queries<BOOST_PP_CAT(T, _index), wand_raw_index>,    \
-  //                params);                                                      \
-  //   }                                                                          \
+    // auto params = std::make_tuple(
+    //     app.index_filename(), app.wand_data_path(), app.queries(),
+    //     app.thresholds_file(), app.index_encoding(), app.algorithm(), app.k(),
+    //     documents_file, app.scorer_params(), run_id, iteration);
+
+    // /**/
+    // if (false) { // NOLINT
+    // #define LOOP_BODY(R, DATA, T) \
+  // } \
+  // else if (app.index_encoding() == BOOST_PP_STRINGIZE(T)) { \
+  //   if (app.is_wand_compressed()) { \
+  //     if (quantized) { \
+  //       std::apply(evaluate_queries<BOOST_PP_CAT(T, _index), \
+  //                                   wand_uniform_index_quantized>, \
+  //                  params); \
+  //     } else { \
+  //       std::apply( \
+  //           evaluate_queries<BOOST_PP_CAT(T, _index), wand_uniform_index>, \
+  //           params); \
+  //     } \
+  //   } else { \
+  //     std::apply(evaluate_queries<BOOST_PP_CAT(T, _index), wand_raw_index>, \
+  //                params); \
+  //   } \
   //   /**/
 
-  //   BOOST_PP_SEQ_FOR_EACH(LOOP_BODY, _, PISA_INDEX_TYPES);
-  // #undef LOOP_BODY
-  // } else {
-  //   spdlog::error("Unknown type {}", app.index_encoding());
-  // }
+    //   BOOST_PP_SEQ_FOR_EACH(LOOP_BODY, _, PISA_INDEX_TYPES);
+    // #undef LOOP_BODY
+    // } else {
+    //   spdlog::error("Unknown type {}", app.index_encoding());
+    // }
 }
